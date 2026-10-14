@@ -66,21 +66,44 @@ export interface Coupon {
 export interface Database {
   public: {
     Tables: {
-      businesses: { Row: Business; Insert: Partial<Business>; Update: Partial<Business> };
-      profiles: { Row: Profile; Insert: Partial<Profile>; Update: Partial<Profile> };
+      businesses: {
+        Row: Business;
+        Insert: Partial<Business>;
+        Update: Partial<Business>;
+        Relationships: [];
+      };
+      profiles: {
+        Row: Profile;
+        Insert: Partial<Profile>;
+        Update: Partial<Profile>;
+        Relationships: [];
+      };
       loyalty_programs: {
         Row: LoyaltyProgram;
         Insert: Partial<LoyaltyProgram>;
         Update: Partial<LoyaltyProgram>;
+        Relationships: [];
       };
       customer_business_progress: {
         Row: CustomerBusinessProgress;
         Insert: Partial<CustomerBusinessProgress>;
         Update: Partial<CustomerBusinessProgress>;
+        Relationships: [];
       };
-      transactions: { Row: Transaction; Insert: Partial<Transaction>; Update: Partial<Transaction> };
-      coupons: { Row: Coupon; Insert: Partial<Coupon>; Update: Partial<Coupon> };
+      transactions: {
+        Row: Transaction;
+        Insert: Partial<Transaction>;
+        Update: Partial<Transaction>;
+        Relationships: [];
+      };
+      coupons: {
+        Row: Coupon;
+        Insert: Partial<Coupon>;
+        Update: Partial<Coupon>;
+        Relationships: [];
+      };
     };
+    Views: {};
     Functions: {
       register_purchase: {
         Args: { p_customer_id: string; p_amount?: number | null; p_note?: string | null };
@@ -96,6 +119,16 @@ export interface Database {
         Args: { p_coupon_id: string };
         Returns: Coupon;
       };
+      current_role: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      current_business_id: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
     };
+    Enums: {};
+    CompositeTypes: {};
   };
 }
