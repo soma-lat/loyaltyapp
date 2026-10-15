@@ -24,6 +24,7 @@ export default async function MovimientosPage() {
       <main className="mx-auto max-w-2xl px-6 py-10">
         <h1 className="mb-4 text-lg font-semibold text-gray-900">Movimientos</h1>
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-500">
               <tr>
@@ -36,11 +37,11 @@ export default async function MovimientosPage() {
             <tbody>
               {(transactions as (Transaction & { businesses: Business })[] | null)?.map((t) => (
                 <tr key={t.id} className="border-t border-gray-100">
-                  <td className="px-4 py-2 text-gray-600">
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-600">
                     {new Date(t.created_at).toLocaleString("es-MX")}
                   </td>
-                  <td className="px-4 py-2 text-gray-900">{t.businesses?.name}</td>
-                  <td className="px-4 py-2">
+                  <td className="whitespace-nowrap px-4 py-2 text-gray-900">{t.businesses?.name}</td>
+                  <td className="whitespace-nowrap px-4 py-2">
                     <span
                       className={
                         t.type === "purchase"
@@ -63,6 +64,7 @@ export default async function MovimientosPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
     </div>

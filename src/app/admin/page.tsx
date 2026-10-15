@@ -62,6 +62,7 @@ export default async function AdminDashboard() {
             Transacciones recientes
           </h2>
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>
@@ -73,7 +74,7 @@ export default async function AdminDashboard() {
               <tbody>
                 {(transactions as Transaction[] | null)?.map((t) => (
                   <tr key={t.id} className="border-t border-gray-100">
-                    <td className="px-4 py-2 text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-600">
                       {new Date(t.created_at).toLocaleString("es-MX")}
                     </td>
                     <td className="px-4 py-2">{t.type === "purchase" ? "Compra" : "Canje"}</td>
@@ -89,6 +90,7 @@ export default async function AdminDashboard() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </section>
       </main>

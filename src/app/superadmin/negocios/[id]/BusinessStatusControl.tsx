@@ -32,7 +32,7 @@ export function BusinessStatusControl({
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <h3 className="mb-2 text-sm font-medium text-gray-700">Estatus del negocio</h3>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {statuses.map((s) => (
           <button
             key={s}
