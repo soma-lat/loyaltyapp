@@ -1,19 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
-import { QrCode } from "@/components/QrCode";
+import { QrCredentialModal } from "@/components/QrCredentialModal";
+import { ProgressCard } from "@/components/ProgressCard";
+import { CouponCard } from "@/components/CouponCard";
 import type { Coupon, CustomerBusinessProgress, LoyaltyProgram, Business } from "@/lib/types";
-
-const links = [
-  { href: "/portal", label: "Mi código" },
-  { href: "/portal/movimientos", label: "Movimientos" },
-];
 
 export default async function PortalPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: progressRows }, { data: coupons }] = await Promise.all([
+  const [{ data: progressRows }, { data: coupons }, { data: profile }] = await Promise.all([
     supabase
       .from("customer_business_progress")
       .select("*, businesses:business_id(id, name)")
@@ -24,6 +20,7 @@ export default async function PortalPage() {
       .eq("customer_id", user.id)
       .eq("status", "available")
       .order("created_at", { ascending: false }),
+    supabase.from("profiles").select("full_name").eq("id", user.id).single(),
   ]);
 
   const businessIds = (progressRows ?? []).map((p: any) => p.business_id);
@@ -36,83 +33,67 @@ export default async function PortalPage() {
     : { data: [] as LoyaltyProgram[] };
 
   const programByBusiness = new Map((programs ?? []).map((p: LoyaltyProgram) => [p.business_id, p]));
+  const memberName = profile?.full_name || user.email || "Socio";
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   return (
-    <div>
-      <NavBar title="Mi Lealtad" links={links} />
-      <main className="mx-auto max-w-2xl space-y-8 px-6 py-10">
-        <section className="flex flex-col items-center gap-3 text-center">
-          <h1 className="text-lg font-semibold text-gray-900">Tu código de cliente</h1>
-          <QrCode value={user.id} />
-          <p className="text-xs text-gray-500">Muéstralo en el negocio para registrar tu compra.</p>
-        </section>
+    <div className="space-y-8">
+      <section className="rounded-3xl bg-primary p-6 text-white">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Tu credencial</p>
+        <h2 className="mt-1 text-2xl font-extrabold">{firstName ? `Hola, ${firstName}` : "Hola"}</h2>
+        <p className="mt-1 mb-5 text-sm text-gray-300">
+          Muestra tu código en el negocio cada vez que compres.
+        </p>
+        <QrCredentialModal memberId={user.id} memberName={memberName} />
+      </section>
 
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Cupones vigentes
-          </h2>
-          {!coupons?.length && (
-            <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
-              Aún no tienes cupones disponibles.
-            </p>
-          )}
+      <section aria-labelledby="cupones-titulo">
+        <h2 id="cupones-titulo" className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
+          Cupones vigentes
+        </h2>
+        {!coupons?.length ? (
+          <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+            Aún no tienes cupones disponibles.
+          </p>
+        ) : (
           <div className="grid gap-3">
-            {(coupons as (Coupon & { businesses: { name: string } })[] | null)?.map((c) => (
-              <div
+            {(coupons as (Coupon & { businesses: { name: string } })[]).map((c) => (
+              <CouponCard
                 key={c.id}
-                className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4"
-              >
-                <div>
-                  <p className="font-medium text-green-800">{c.reward_description}</p>
-                  <p className="text-xs text-green-700">{c.businesses?.name}</p>
-                </div>
-                <span className="rounded-full bg-green-600 px-3 py-1 text-xs font-medium text-white">
-                  Disponible
-                </span>
-              </div>
+                rewardDescription={c.reward_description}
+                businessName={c.businesses?.name ?? ""}
+                createdAt={c.created_at}
+              />
             ))}
           </div>
-        </section>
+        )}
+      </section>
 
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Progreso por negocio
-          </h2>
-          {!progressRows?.length && (
-            <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
-              Aún no tienes compras registradas en ningún negocio.
-            </p>
-          )}
+      <section aria-labelledby="progreso-titulo">
+        <h2 id="progreso-titulo" className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
+          Progreso por negocio
+        </h2>
+        {!progressRows?.length ? (
+          <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+            Aún no tienes compras registradas en ningún negocio.
+          </p>
+        ) : (
           <div className="grid gap-3">
-            {(progressRows as (CustomerBusinessProgress & { businesses: Business })[] | null)?.map(
-              (p) => {
-                const program = programByBusiness.get(p.business_id);
-                const required = program?.purchases_required ?? 0;
-                const pct = required ? Math.min(100, (p.purchases_count / required) * 100) : 0;
-                return (
-                  <div key={p.id} className="rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{p.businesses?.name}</span>
-                      <span className="text-sm text-gray-500">
-                        {p.purchases_count}/{required || "—"} compras
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-gray-100">
-                      <div
-                        className="h-2 rounded-full bg-brand-500"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    {program && (
-                      <p className="mt-2 text-xs text-gray-500">Recompensa: {program.reward_description}</p>
-                    )}
-                  </div>
-                );
-              }
-            )}
+            {(progressRows as (CustomerBusinessProgress & { businesses: Business })[]).map((p) => {
+              const program = programByBusiness.get(p.business_id);
+              return (
+                <ProgressCard
+                  key={p.id}
+                  businessName={p.businesses?.name ?? ""}
+                  purchasesCount={p.purchases_count}
+                  purchasesRequired={program?.purchases_required ?? null}
+                  rewardDescription={program?.reward_description ?? null}
+                />
+              );
+            })}
           </div>
-        </section>
-      </main>
+        )}
+      </section>
     </div>
   );
 }
