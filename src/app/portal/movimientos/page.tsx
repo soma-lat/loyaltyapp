@@ -1,11 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
+import { TransactionItem } from "@/components/TransactionItem";
 import type { Transaction, Business } from "@/lib/types";
-
-const links = [
-  { href: "/portal", label: "Mi código" },
-  { href: "/portal/movimientos", label: "Movimientos" },
-];
 
 export default async function MovimientosPage() {
   const supabase = createClient();
@@ -19,54 +14,28 @@ export default async function MovimientosPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div>
-      <NavBar title="Mi Lealtad" links={links} />
-      <main className="mx-auto max-w-2xl px-6 py-10">
-        <h1 className="mb-4 text-lg font-semibold text-gray-900">Movimientos</h1>
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-4 py-2">Fecha</th>
-                <th className="px-4 py-2">Negocio</th>
-                <th className="px-4 py-2">Tipo</th>
-                <th className="px-4 py-2">Detalle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(transactions as (Transaction & { businesses: Business })[] | null)?.map((t) => (
-                <tr key={t.id} className="border-t border-gray-100">
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-600">
-                    {new Date(t.created_at).toLocaleString("es-MX")}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-900">{t.businesses?.name}</td>
-                  <td className="whitespace-nowrap px-4 py-2">
-                    <span
-                      className={
-                        t.type === "purchase"
-                          ? "rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700"
-                          : "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
-                      }
-                    >
-                      {t.type === "purchase" ? "Compra" : "Canje"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-gray-600">{t.note ?? "—"}</td>
-                </tr>
-              ))}
-              {!transactions?.length && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
-                    Sin movimientos todavía.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          </div>
-        </div>
-      </main>
-    </div>
+    <section aria-labelledby="historial-titulo">
+      <h2 id="historial-titulo" className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
+        Historial de compras y canjes
+      </h2>
+      {!transactions?.length ? (
+        <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+          Sin movimientos todavía.
+        </p>
+      ) : (
+        <ul className="grid gap-3">
+          {(transactions as (Transaction & { businesses: Business })[]).map((t) => (
+            <TransactionItem
+              key={t.id}
+              type={t.type}
+              businessName={t.businesses?.name ?? ""}
+              amount={t.amount}
+              note={t.note}
+              createdAt={t.created_at}
+            />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
