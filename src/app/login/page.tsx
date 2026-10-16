@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(
+    searchParams.get("modo") === "registro" ? "signup" : "signin"
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -90,7 +102,7 @@ export default function LoginPage() {
         </button>
 
         <p className="pt-2 text-center text-xs text-gray-400">
-          Cuentas de negocio y super administrador se crean manualmente desde Supabase.
+          ¿Tienes un negocio? Escríbenos a contacto@loyaltyapp.mx para activar tu cuenta.
         </p>
       </form>
     </main>
