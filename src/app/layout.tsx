@@ -2,8 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lealtad MVP",
-  description: "Programa de recompensas y lealtad para negocios",
+  title: "Loyalty APP | Programa de lealtad y recompensas para negocios",
+  description:
+    "Fideliza clientes sin tarjetas físicas: un QR por cliente, sellos por cada compra y recompensas automáticas. Ideal para cafeterías, restaurantes, barberías y salones de belleza.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/favicon-32.png",
@@ -12,7 +13,14 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Lealtad",
+    title: "Loyalty APP",
+  },
+  openGraph: {
+    title: "Loyalty APP | Programa de lealtad y recompensas para negocios",
+    description:
+      "Fideliza clientes sin tarjetas físicas: un QR por cliente, sellos por cada compra y recompensas automáticas.",
+    locale: "es_MX",
+    type: "website",
   },
 };
 
