@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { NavBar } from "@/components/NavBar";
+import { StatCard } from "@/components/StatCard";
 import { NewBusinessForm } from "./NewBusinessForm";
 import type { Business, Transaction } from "@/lib/types";
 
@@ -122,15 +123,6 @@ export default async function SuperAdminPage() {
           </div>
         </section>
       </main>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
     </div>
   );
 }

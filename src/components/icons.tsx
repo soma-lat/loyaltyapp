@@ -109,3 +109,40 @@ export function LogoutIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function UsersIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 8a3 3 0 1 1 0-6" />
+      <path d="M15 14.5c2.84.33 5 2.5 5 5.5" />
+    </BaseIcon>
+  );
+}
+
+export function ChartIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M4 20V10M10 20V4M16 20v-7M4 20h16" />
+    </BaseIcon>
+  );
+}
+
+export function SettingsIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </BaseIcon>
+  );
+}
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </BaseIcon>
+  );
+}
