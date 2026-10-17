@@ -17,6 +17,8 @@ export interface Profile {
   full_name: string | null;
   role: Role;
   business_id: string | null;
+  email: string | null;
+  phone: string | null;
   created_at: string;
 }
 

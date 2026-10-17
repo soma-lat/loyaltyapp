@@ -14,11 +14,15 @@ export function QrScanner({ onResult }: { onResult: (text: string) => void }) {
     let controls: { stop: () => void } | undefined;
 
     reader
-      .decodeFromVideoDevice(undefined, videoRef.current!, (result) => {
-        if (result && activeRef.current) {
-          onResult(result.getText());
+      .decodeFromConstraints(
+        { video: { facingMode: "environment" } },
+        videoRef.current!,
+        (result) => {
+          if (result && activeRef.current) {
+            onResult(result.getText());
+          }
         }
-      })
+      )
       .then((c) => {
         controls = c;
       })

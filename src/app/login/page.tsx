@@ -16,6 +16,8 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [mode, setMode] = useState<"signin" | "signup">(
     searchParams.get("modo") === "registro" ? "signup" : "signin"
   );
@@ -37,9 +39,32 @@ function LoginForm() {
         if (error) throw error;
         window.location.href = "/portal";
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setMessage("Cuenta creada. Revisa tu correo para confirmar, luego inicia sesión.");
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName, phone: phone || null } },
+        });
+
+        if (error) {
+          if (error.message.toLowerCase().includes("already registered")) {
+            setError("Ya existe una cuenta con este correo. Inicia sesión en su lugar.");
+            setMode("signin");
+            return;
+          }
+          throw error;
+        }
+
+        // Con "Confirm email" activo, Supabase responde sin error aunque el
+        // correo ya exista; identities queda vacío en ese caso (ver P11).
+        if (data.user && data.user.identities?.length === 0) {
+          setError("Ya existe una cuenta con este correo. Inicia sesión en su lugar.");
+          setMode("signin");
+          return;
+        }
+
+        setMessage(
+          "Cuenta creada. Revisa tu correo para confirmar tu cuenta — el enlace de confirmación funciona una sola vez — y luego inicia sesión."
+        );
         setMode("signin");
       }
     } catch (err) {
@@ -58,6 +83,19 @@ function LoginForm() {
         <h1 className="text-xl font-semibold text-gray-900">
           {mode === "signin" ? "Iniciar sesión" : "Crear cuenta de cliente"}
         </h1>
+
+        {mode === "signup" && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Nombre completo</label>
+            <input
+              type="text"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+        )}
 
         <div className="space-y-1">
           <label className="text-sm font-medium text-gray-700">Correo</label>
@@ -81,6 +119,18 @@ function LoginForm() {
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           />
         </div>
+
+        {mode === "signup" && (
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Teléfono (opcional)</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         {message && <p className="text-sm text-green-600">{message}</p>}
