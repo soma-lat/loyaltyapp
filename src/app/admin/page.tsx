@@ -1,12 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
-import type { Transaction } from "@/lib/types";
-
-const links = [
-  { href: "/admin", label: "Panel" },
-  { href: "/admin/scan", label: "Escanear" },
-  { href: "/admin/programa", label: "Programa" },
-];
+import { StatCard } from "@/components/StatCard";
+import { TransactionItem } from "@/components/TransactionItem";
+import type { Transaction, Profile } from "@/lib/types";
 
 export default async function AdminDashboard() {
   const supabase = createClient();
@@ -21,88 +16,74 @@ export default async function AdminDashboard() {
 
   const businessId = profile?.business_id;
 
-  const [{ data: business }, { data: transactions }, { data: progress }] = await Promise.all([
-    businessId
-      ? supabase.from("businesses").select("*").eq("id", businessId).single()
-      : Promise.resolve({ data: null }),
-    businessId
-      ? supabase
-          .from("transactions")
-          .select("*")
-          .eq("business_id", businessId)
-          .order("created_at", { ascending: false })
-          .limit(20)
-      : Promise.resolve({ data: [] as Transaction[] }),
-    businessId
-      ? supabase.from("customer_business_progress").select("id").eq("business_id", businessId)
-      : Promise.resolve({ data: [] }),
+  if (!businessId) {
+    return (
+      <p className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+        Tu cuenta no tiene un negocio asignado. Pide al super administrador que te asocie a uno.
+      </p>
+    );
+  }
+
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [{ data: monthTransactions }, { data: progress }, { data: recent }] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("id, type, customer_id")
+      .eq("business_id", businessId)
+      .gte("created_at", startOfMonth.toISOString()),
+    supabase.from("customer_business_progress").select("id").eq("business_id", businessId),
+    supabase
+      .from("transactions")
+      .select("*, profiles:customer_id(full_name)")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
-  const purchases = (transactions ?? []).filter((t) => t.type === "purchase").length;
-  const redemptions = (transactions ?? []).filter((t) => t.type === "redemption").length;
+  const purchasesThisMonth = (monthTransactions ?? []).filter((t) => t.type === "purchase").length;
+  const redemptionsThisMonth = (monthTransactions ?? []).filter((t) => t.type === "redemption").length;
+  const activeCustomers = new Set((monthTransactions ?? []).map((t) => t.customer_id)).size;
 
   return (
-    <div>
-      <NavBar title={business?.name ?? "Panel del negocio"} links={links} />
-      <main className="mx-auto max-w-4xl space-y-8 px-6 py-10">
-        {!businessId && (
-          <p className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
-            Tu cuenta no tiene un negocio asignado. Pide al super administrador que te asocie a uno.
+    <div className="space-y-8">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatCard label="Compras del mes" value={purchasesThisMonth} />
+        <StatCard label="Canjes del mes" value={redemptionsThisMonth} />
+        <StatCard label="Clientes activos" value={activeCustomers} />
+      </section>
+
+      <section aria-labelledby="actividad-titulo">
+        <h2 id="actividad-titulo" className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted">
+          Actividad reciente
+        </h2>
+        {!recent?.length ? (
+          <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+            Sin actividad todavía. Escanea el QR de un cliente para registrar su primera compra.
           </p>
+        ) : (
+          <ul className="grid gap-3">
+            {(recent as (Transaction & { profiles: Pick<Profile, "full_name"> | null })[]).map((t) => (
+              <TransactionItem
+                key={t.id}
+                type={t.type}
+                businessName={t.profiles?.full_name || "Cliente"}
+                amount={t.amount}
+                note={t.note}
+                createdAt={t.created_at}
+              />
+            ))}
+          </ul>
         )}
+      </section>
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard label="Clientes con progreso" value={progress?.length ?? 0} />
-          <StatCard label="Compras (últimas 20)" value={purchases} />
-          <StatCard label="Canjes (últimas 20)" value={redemptions} />
-        </section>
-
-        <section>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
-            Transacciones recientes
-          </h2>
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-left text-gray-500">
-                <tr>
-                  <th className="px-4 py-2">Fecha</th>
-                  <th className="px-4 py-2">Tipo</th>
-                  <th className="px-4 py-2">Nota</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(transactions as Transaction[] | null)?.map((t) => (
-                  <tr key={t.id} className="border-t border-gray-100">
-                    <td className="whitespace-nowrap px-4 py-2 text-gray-600">
-                      {new Date(t.created_at).toLocaleString("es-MX")}
-                    </td>
-                    <td className="px-4 py-2">{t.type === "purchase" ? "Compra" : "Canje"}</td>
-                    <td className="px-4 py-2 text-gray-600">{t.note ?? "—"}</td>
-                  </tr>
-                ))}
-                {!transactions?.length && (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-gray-400">
-                      Sin transacciones todavía.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
+      {progress?.length === 0 && (
+        <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+          Aún no tienes clientes con compras registradas en tu negocio.
+        </p>
+      )}
     </div>
   );
 }

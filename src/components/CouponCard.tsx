@@ -16,7 +16,7 @@ export function CouponCard({
       </div>
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-bold text-emerald-900">{rewardDescription}</h3>
-        <p className="truncate text-sm text-emerald-800">{businessName}</p>
+        {businessName && <p className="truncate text-sm text-emerald-800">{businessName}</p>}
         <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">
           Obtenido el{" "}
           {new Date(createdAt).toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })}

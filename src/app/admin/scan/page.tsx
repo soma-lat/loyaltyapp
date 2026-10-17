@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { QrScanner } from "@/components/QrScanner";
+import { GiftIcon, AlertIcon, CheckIcon } from "@/components/icons";
 
 type Result = {
   purchases_count: number;
@@ -46,51 +46,55 @@ export default function ScanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Escanear compra</h1>
-        <Link href="/admin" className="text-sm text-brand-600 hover:underline">
-          Volver
-        </Link>
-      </div>
-
+    <div className="space-y-5">
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>
+        <label className="text-sm font-bold text-primary">Nota (opcional)</label>
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Ej. café americano"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-2xl border border-bordercolor px-4 py-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
         />
       </div>
 
-      {scanning && <QrScanner onResult={handleResult} />}
+      {scanning && (
+        <div className="overflow-hidden rounded-3xl border border-bordercolor">
+          <QrScanner onResult={handleResult} />
+        </div>
+      )}
 
-      {loading && <p className="text-sm text-gray-500">Registrando compra...</p>}
+      {loading && <p className="text-sm text-muted">Registrando compra...</p>}
 
       {error && (
-        <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
-          <button onClick={reset} className="text-sm font-medium text-red-700 underline">
+        <div className="space-y-3 rounded-3xl border border-red-200 bg-red-50 p-5">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertIcon className="h-5 w-5 shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+          <button onClick={reset} className="text-sm font-bold text-red-700 underline">
             Escanear otro
           </button>
         </div>
       )}
 
       {result && (
-        <div className="space-y-3 rounded-lg border border-green-200 bg-green-50 p-4">
-          <p className="font-medium text-green-800">Compra registrada</p>
-          <p className="text-sm text-green-700">
+        <div className="space-y-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="flex items-center gap-2 text-emerald-800">
+            <CheckIcon className="h-5 w-5 shrink-0" />
+            <p className="font-bold">Compra registrada</p>
+          </div>
+          <p className="text-sm text-emerald-800">
             Progreso: {result.purchases_count}/{result.purchases_required}
           </p>
           {result.coupon_issued && (
-            <p className="text-sm font-semibold text-green-800">
-              🎉 ¡Se generó un cupón de recompensa para el cliente!
-            </p>
+            <div className="flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white">
+              <GiftIcon className="h-5 w-5 shrink-0" />
+              Se generó un cupón de recompensa para el cliente
+            </div>
           )}
           <button
             onClick={reset}
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            className="w-full rounded-2xl bg-primary py-3 text-sm font-bold text-white hover:opacity-90"
           >
             Escanear otro cliente
           </button>
