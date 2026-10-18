@@ -1,21 +1,10 @@
 import Link from "next/link";
-import { Nunito, IBM_Plex_Mono } from "next/font/google";
+import { nunitoLanding as nunito, plexMonoLanding as plexMono } from "@/lib/fonts";
 import { PublicHeader } from "@/components/PublicHeader";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LoyaltyCardDemo } from "@/components/LoyaltyCardDemo";
 import { Reveal } from "@/components/Reveal";
 import styles from "@/styles/landing.module.css";
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--next-nunito",
-});
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--next-plex-mono",
-});
 
 const STEPS = [
   {

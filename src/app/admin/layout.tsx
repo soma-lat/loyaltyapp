@@ -1,15 +1,8 @@
-import { Nunito } from "next/font/google";
+import { nunitoApp as nunito } from "@/lib/fonts";
 import { createClient } from "@/lib/supabase/server";
 import { AdminHeader } from "@/components/AdminHeader";
 import { AdminBottomNav } from "@/components/AdminBottomNav";
 import { ToastProvider } from "@/components/Toast";
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  variable: "--font-nunito",
-  display: "swap",
-});
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
