@@ -36,15 +36,26 @@ Paneles:
   Clientes (lista buscable, con selector de promocion si hay mas de una; cada
   cliente abre un modal con su progreso en esa promocion y boton "Canjear"
   que llama a redeem_coupon), Compras (historial con filtro Todas/Compras/
-  Canjes y paginado), Informes (resumen del mes, tendencia de 14 dias,
-  ranking de clientes frecuentes), Promociones (/admin/promociones: crear,
+  Canjes y paginado), Informes (rango de fechas personalizado via
+  searchParams ?from&to, con export a CSV en /api/admin/informes/export;
+  stats y ranking de clientes se recalculan sobre ese rango; tendencia de 14
+  dias fija aparte; desglose de compras/canjes por promocion), Promociones (/admin/promociones: crear,
   editar y mover el ciclo de vida draft/active/paused/finished de cada
   promocion de sellos; varias pueden estar "active" a la vez, ej. un
   programa de cafes y otro de crepas en paralelo) y Perfil (/admin/perfil:
   nombre, logotipo, descripcion, ubicacion y contacto del negocio; sin tab
   propio en el bottom nav, se accede desde el nombre del negocio en
-  AdminHeader). Clientes, Compras, Promociones y Perfil resuelven sus datos
-  en el servidor (page.tsx) y los pasan como props a una vista cliente.
+  AdminHeader), Seguridad (/admin/seguridad: registro de intentos de
+  escalada de privilegios bloqueados y cambios de estado de promociones;
+  solo lectura, se accede desde un link al final de Informes, sin tab propio
+  en el bottom nav) y Empleados (/admin/empleados: agregar/quitar employees
+  por correo via /api/admin/employees; se accede desde un link al final de
+  Perfil, sin tab propio). Todas estas secciones (salvo Inicio, Escanear y
+  Clientes) son exclusivas de business_admin: un employee recibe "No tienes
+  permiso para ver esta sección" si entra por URL directa, y no las ve en el
+  bottom nav (ver seccion 3, rol employee). Clientes, Compras, Promociones,
+  Perfil, Seguridad y Empleados resuelven sus datos en el servidor
+  (page.tsx) y los pasan como props a una vista cliente.
 - Super admin (/superadmin): alta de negocios, activar/suspender, asignar
   administradores (src/app/superadmin/negocios/[id]/), transacciones
   globales.
@@ -69,8 +80,20 @@ hay que hacer Redeploy.
 ------------------------------------------------------------------------------
 Columna profiles.role (texto con CHECK):
 - customer        : valor por defecto, cliente final.
+- employee        : personal de un negocio (requiere business_id). Permisos
+                    fijos: escanear (register_purchase), ver clientes y
+                    canjear cupones (redeem_coupon). No puede configurar
+                    promociones ni el perfil del negocio, ni ver el
+                    registro de seguridad; esas pantallas y el bottom nav
+                    completo quedan ocultos para este rol (ver
+                    src/lib/supabase/adminContext.ts y AdminBottomNav).
 - business_admin  : administrador de un negocio (requiere business_id).
 - super_admin     : administrador global.
+
+Alta de employee: la hace el propio business_admin desde /admin/empleados
+(POST/DELETE en /api/admin/employees, con service_role, igual que
+assign-admin). No invita por correo, la cuenta debe existir ya. No se puede
+convertir en employee a una cuenta que ya sea business_admin o super_admin.
 
 4. CONFIGURACION DE SUPABASE AUTH
 ------------------------------------------------------------------------------
@@ -139,11 +162,19 @@ transactions
   id | business_id | customer_id | registered_by -> profiles |
   loyalty_program_id -> loyalty_programs (nullable) | type (purchase,
   redemption) | amount numeric(12,2) | note | created_at
+  (redeem_coupon llena loyalty_program_id desde la migracion 0011; antes
+  quedaba null en todos los canjes aunque la columna ya existia desde 0008)
 
 coupons
   id | customer_id | business_id | loyalty_program_id | reward_description |
   status (available, redeemed, expired; default available) | created_at |
   redeemed_at
+
+audit_log (agregada en la migracion 0009; sin policy de insert para nadie,
+  solo escriben los triggers SECURITY DEFINER de abajo)
+  id | business_id (nullable) -> businesses | actor_id -> profiles |
+  action (privilege_escalation_blocked, promotion_status_changed) | detail
+  jsonb | created_at
 
 Funciones auxiliares (SECURITY DEFINER, usadas por RLS):
 - current_profile_role() : rol del usuario autenticado.
@@ -151,14 +182,14 @@ Funciones auxiliares (SECURITY DEFINER, usadas por RLS):
 
 Funciones de negocio (SECURITY DEFINER):
 - register_purchase(p_customer_id, p_program_id, p_amount, p_note)
-    Solo business_admin. p_program_id es obligatorio (el admin lo elige en
+    business_admin o employee. p_program_id es obligatorio (se elige en
     /admin/scan antes de escanear si hay mas de una promocion activa).
     Valida cliente y que la promocion sea del negocio y este "active",
     inserta la transaccion, suma al progreso de esa promocion y, al llegar
     al umbral, emite un cupon y reinicia el contador a 0.
 - redeem_coupon(p_coupon_id)
-    Solo business_admin del mismo negocio. Marca el cupon como redeemed y
-    registra una transaccion de tipo redemption.
+    business_admin o employee del mismo negocio. Marca el cupon como
+    redeemed y registra una transaccion de tipo redemption.
 
 Triggers:
 - on_auth_user_created -> handle_new_user(): crea el perfil como customer al
@@ -167,23 +198,38 @@ Triggers:
   sincronizado si el usuario cambia su correo.
 - prevent_profile_privilege_escalation (BEFORE UPDATE en profiles): revierte
   cambios a role/business_id si quien actualiza no es super_admin ni
-  service_role.
+  service_role, y deja un registro en audit_log (migracion 0009).
+- prevent_business_privilege_escalation (BEFORE UPDATE en businesses):
+  revierte cambios a status/plan/slug si quien actualiza no es super_admin
+  ni service_role, y deja un registro en audit_log (migraciones 0007/0009).
+- on_loyalty_program_status_change -> log_promotion_status_change() (AFTER
+  UPDATE OF status en loyalty_programs): registra en audit_log cada cambio
+  de ciclo de vida de una promocion (migracion 0009).
 
 Politicas RLS (resumen):
-- businesses: super_admin todo; business_admin lee el suyo; customer lee los
-  negocios con los que tiene progreso o algun cupon.
+- businesses: super_admin todo; business_admin lee y actualiza el suyo
+  (update exige ademas role = business_admin, migracion 0010, para que
+  employee -que tambien tiene business_id- no pueda editar el perfil; el
+  trigger prevent_business_privilege_escalation bloquea cambios a status/
+  plan/slug salvo super_admin o service_role); customer lee los negocios con
+  los que tiene progreso o algun cupon.
 - profiles: cada usuario lee y actualiza el propio (el trigger
   prevent_profile_privilege_escalation bloquea cambios a role/business_id
-  salvo super_admin o service_role); super_admin lee todos; business_admin
-  lee clientes con progreso en su negocio.
+  salvo super_admin o service_role); super_admin lee todos; business_admin y
+  employee leen clientes con progreso en su negocio; business_admin ademas
+  lee sus propios employees (migracion 0010).
 - loyalty_programs: super_admin todo; business_admin gestiona los de su
-  negocio; cualquiera lee los activos.
+  negocio (exige role = business_admin desde la migracion 0010, antes
+  bastaba con el business_id); cualquiera lee los activos.
 - customer_business_progress, transactions: lectura para super_admin,
-  business_admin (su negocio) y cliente (lo propio).
+  business_admin (su negocio), employee (su negocio) y cliente (lo propio).
 - coupons: lectura igual que lo anterior; las escrituras pasan solo por
   register_purchase y redeem_coupon, no hay update directo de columnas.
 - Las escrituras de transacciones, progreso y cupones pasan solo por las
   funciones RPC.
+- audit_log: lectura para super_admin (todo) y business_admin (su negocio);
+  nadie tiene policy de insert, solo escriben los triggers SECURITY DEFINER
+  de arriba.
 
 6. FLUJO FUNCIONAL
 ------------------------------------------------------------------------------
@@ -214,13 +260,19 @@ src/
     admin/
       clientes/ (page.tsx, ClientesView.tsx)
       compras/ (page.tsx, ComprasView.tsx)
+      empleados/ (page.tsx, EmpleadosView.tsx)
       informes/page.tsx
       perfil/ (page.tsx, PerfilView.tsx)
       promociones/ (page.tsx, PromocionesView.tsx)
       scan/ (page.tsx, ScanView.tsx)
+      seguridad/page.tsx
       layout.tsx
       page.tsx
-    api/superadmin/assign-admin/route.ts
+    api/
+      admin/
+        employees/route.ts
+        informes/export/route.ts
+      superadmin/assign-admin/route.ts
     login/page.tsx
     portal/
       movimientos/page.tsx
@@ -252,6 +304,8 @@ src/
       admin.ts      (cliente con service_role, solo servidor)
       client.ts     (cliente del navegador)
       server.ts     (cliente del servidor)
+      adminContext.ts (business_id + role del usuario autenticado; usado por
+                       las paginas de /admin para ocultar secciones a employee)
     fonts.ts        (Nunito/IBM Plex Mono via next/font/local, autohospedadas
                      en src/fonts/ para que el build no dependa de red)
     types.ts

@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: profile } = user
-    ? await supabase.from("profiles").select("full_name, business_id").eq("id", user.id).single()
+    ? await supabase.from("profiles").select("full_name, business_id, role").eq("id", user.id).single()
     : { data: null };
 
   const { data: business } = profile?.business_id
@@ -18,15 +18,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const displayName = profile?.full_name || user?.email || "Admin";
   const businessName = business?.name ?? "Panel de negocio";
+  const role = profile?.role ?? "employee";
 
   return (
     <div className={`${nunito.variable} flex min-h-dvh flex-col bg-surface font-nunito text-primary`}>
       <ToastProvider>
-        <AdminHeader businessName={businessName} displayName={displayName} />
+        <AdminHeader businessName={businessName} displayName={displayName} role={role} />
         <main className="mx-auto w-full max-w-lg flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6">
           {children}
         </main>
-        <AdminBottomNav />
+        <AdminBottomNav role={role} />
       </ToastProvider>
     </div>
   );

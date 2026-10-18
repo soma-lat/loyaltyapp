@@ -4,14 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType, SVGProps } from "react";
 import { HomeIcon, UsersIcon, ListIcon, ChartIcon, SettingsIcon } from "@/components/icons";
+import type { Role } from "@/lib/types";
 
 export const ADMIN_TABS: {
   href: string;
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  employeeVisible?: boolean;
 }[] = [
-  { href: "/admin", label: "Inicio", icon: HomeIcon },
-  { href: "/admin/clientes", label: "Clientes", icon: UsersIcon },
+  { href: "/admin", label: "Inicio", icon: HomeIcon, employeeVisible: true },
+  { href: "/admin/clientes", label: "Clientes", icon: UsersIcon, employeeVisible: true },
   { href: "/admin/compras", label: "Compras", icon: ListIcon },
   { href: "/admin/informes", label: "Informes", icon: ChartIcon },
   { href: "/admin/promociones", label: "Promociones", icon: SettingsIcon },
@@ -21,8 +23,9 @@ export function isAdminTabActive(pathname: string, href: string) {
   return href === "/admin" ? pathname === href : pathname.startsWith(href);
 }
 
-export function AdminBottomNav() {
+export function AdminBottomNav({ role }: { role: Role }) {
   const pathname = usePathname();
+  const tabs = role === "employee" ? ADMIN_TABS.filter((t) => t.employeeVisible) : ADMIN_TABS;
 
   return (
     <nav
@@ -30,7 +33,7 @@ export function AdminBottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-bordercolor bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <ul className="mx-auto flex max-w-lg">
-        {ADMIN_TABS.map(({ href, label, icon: Icon }) => {
+        {tabs.map(({ href, label, icon: Icon }) => {
           const active = isAdminTabActive(pathname, href);
           return (
             <li key={href} className="flex-1">

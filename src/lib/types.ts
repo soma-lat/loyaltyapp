@@ -1,4 +1,4 @@
-export type Role = "customer" | "business_admin" | "super_admin";
+export type Role = "customer" | "employee" | "business_admin" | "super_admin";
 export type BusinessStatus = "active" | "suspended" | "trial";
 export type TransactionType = "purchase" | "redemption";
 export type CouponStatus = "available" | "redeemed" | "expired";
@@ -59,6 +59,15 @@ export interface Transaction {
   created_at: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  business_id: string | null;
+  actor_id: string | null;
+  action: string;
+  detail: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export interface Coupon {
   id: string;
   customer_id: string;
@@ -110,6 +119,12 @@ export interface Database {
         Row: Coupon;
         Insert: Partial<Coupon>;
         Update: Partial<Coupon>;
+        Relationships: [];
+      };
+      audit_log: {
+        Row: AuditLogEntry;
+        Insert: Partial<AuditLogEntry>;
+        Update: Partial<AuditLogEntry>;
         Relationships: [];
       };
     };
