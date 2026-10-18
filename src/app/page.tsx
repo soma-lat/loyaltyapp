@@ -3,6 +3,7 @@ import { Nunito, IBM_Plex_Mono } from "next/font/google";
 import { PublicHeader } from "@/components/PublicHeader";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { LoyaltyCardDemo } from "@/components/LoyaltyCardDemo";
+import { Reveal } from "@/components/Reveal";
 import styles from "@/styles/landing.module.css";
 
 const nunito = Nunito({
@@ -121,8 +122,7 @@ export default function Home() {
               Fidelización sin fricción
             </span>
             <h1>
-              Cada compra cuenta.
-              <br />
+              Cada compra cuenta.{" "}
               <span className={styles.grad}>Y ahora, también te premia.</span>
             </h1>
             <p className={styles.heroSub}>
@@ -149,65 +149,75 @@ export default function Home() {
 
       <section id="como-funciona" className={`${styles.section} ${styles.sectionLight}`}>
         <div className={styles.bandInner}>
-          <div className={styles.sectionHead}>
-            <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
-              Cómo funciona
-            </span>
-            <h2>Así de fácil funciona</h2>
-            <p>Tres pasos y listo. Sin vueltas.</p>
-          </div>
+          <Reveal>
+            <div className={styles.sectionHead}>
+              <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
+                Cómo funciona
+              </span>
+              <h2>Así de fácil funciona</h2>
+              <p>Tres pasos y listo. Sin vueltas.</p>
+            </div>
+          </Reveal>
 
           <div className={styles.steps}>
             {STEPS.map((step, i) => (
-              <div key={step.title} className={styles.stepCard}>
-                <span className={styles.stepNum}>PASO {String(i + 1).padStart(2, "0")}</span>
-                <h3>{step.title}</h3>
-                <p>{step.description}</p>
-              </div>
+              <Reveal key={step.title} delay={i * 100}>
+                <div className={styles.stepCard}>
+                  <span className={styles.stepNum}>PASO {String(i + 1).padStart(2, "0")}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
 
-          <div className={styles.exampleStrip}>
-            <b>Ejemplo</b>
-            <p>
-              En <strong>Cafetería Mi Tacita</strong>, 10 compras te dan el siguiente café gratis.
-              Tú compras, escaneas y la app lleva la cuenta por ti.
-            </p>
-          </div>
+          <Reveal delay={150}>
+            <div className={styles.exampleStrip}>
+              <b>Ejemplo</b>
+              <p>
+                En <strong>Cafetería Mi Tacita</strong>, 10 compras te dan el siguiente café gratis.
+                Tú compras, escaneas y la app lleva la cuenta por ti.
+              </p>
+            </div>
+          </Reveal>
         </div>
       </section>
 
       <section id="negocios" className={`${styles.section} ${styles.sectionDark}`}>
         <div className={styles.bandInner}>
           <div className={styles.split}>
-            <div>
-              <span className={styles.eyebrow} style={{ color: "var(--gold)" }}>
-                Para negocios
-              </span>
-              <h2 style={{ fontSize: "clamp(26px,3.6vw,36px)", marginTop: 14 }}>
-                Haz que tus clientes vuelvan (y se lo cuenten a todos)
-              </h2>
-              <p style={{ marginTop: 14, color: "var(--text-dark-muted)", fontSize: 16 }}>
-                Un cliente que regresa vale más que uno nuevo. Con Loyalty APP creas tu programa de
-                recompensas en minutos y empiezas a premiar a quienes ya confían en ti, ya sea una
-                barbería, un salón de belleza, una cafetería o un restaurante.
-              </p>
-              <Link className={`${styles.btn} ${styles.btnGold} ${styles.ctaInline}`} href="/login">
-                Registrar mi negocio
-              </Link>
-            </div>
+            <Reveal>
+              <div>
+                <span className={styles.eyebrow} style={{ color: "var(--gold)" }}>
+                  Para negocios
+                </span>
+                <h2 style={{ fontSize: "clamp(26px,3.6vw,36px)", marginTop: 14 }}>
+                  Haz que tus clientes vuelvan (y se lo cuenten a todos)
+                </h2>
+                <p style={{ marginTop: 14, color: "var(--text-dark-muted)", fontSize: 16 }}>
+                  Un cliente que regresa vale más que uno nuevo. Con Loyalty APP creas tu programa de
+                  recompensas en minutos y empiezas a premiar a quienes ya confían en ti, ya sea una
+                  barbería, un salón de belleza, una cafetería o un restaurante.
+                </p>
+                <Link className={`${styles.btn} ${styles.btnGold} ${styles.ctaInline}`} href="/login">
+                  Registrar mi negocio
+                </Link>
+              </div>
+            </Reveal>
 
             <div className={styles.benefitGrid}>
-              {NEGOCIO_BENEFICIOS.map((b) => (
-                <div key={b.title} className={styles.benefit}>
-                  <span className={styles.benefitIcon}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      {b.icon}
-                    </svg>
-                  </span>
-                  <h3>{b.title}</h3>
-                  <p>{b.description}</p>
-                </div>
+              {NEGOCIO_BENEFICIOS.map((b, i) => (
+                <Reveal key={b.title} delay={i * 80}>
+                  <div className={styles.benefit}>
+                    <span className={styles.benefitIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        {b.icon}
+                      </svg>
+                    </span>
+                    <h3>{b.title}</h3>
+                    <p>{b.description}</p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -217,33 +227,37 @@ export default function Home() {
       <section id="usuarios" className={`${styles.section} ${styles.sectionLight}`}>
         <div className={styles.bandInner}>
           <div className={`${styles.split} ${styles.splitReverse}`}>
-            <div>
-              <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
-                Para ti
-              </span>
-              <h2 style={{ fontSize: "clamp(26px,3.6vw,36px)", marginTop: 14 }}>
-                Tus lugares favoritos te lo agradecen
-              </h2>
-              <p style={{ marginTop: 14, color: "var(--text-paper-muted)", fontSize: 16 }}>
-                Deja de cargar tarjetas y de preguntarte cuántos sellos llevas. Con Loyalty APP
-                tienes todo en tu celular y cada visita te acerca a un premio.
-              </p>
-              <Link className={`${styles.btn} ${styles.btnOutlinePaper} ${styles.ctaInline}`} href="/login?modo=registro">
-                Crear mi cuenta
-              </Link>
-            </div>
+            <Reveal>
+              <div>
+                <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
+                  Para ti
+                </span>
+                <h2 style={{ fontSize: "clamp(26px,3.6vw,36px)", marginTop: 14 }}>
+                  Tus lugares favoritos te lo agradecen
+                </h2>
+                <p style={{ marginTop: 14, color: "var(--text-paper-muted)", fontSize: 16 }}>
+                  Deja de cargar tarjetas y de preguntarte cuántos sellos llevas. Con Loyalty APP
+                  tienes todo en tu celular y cada visita te acerca a un premio.
+                </p>
+                <Link className={`${styles.btn} ${styles.btnOutlinePaper} ${styles.ctaInline}`} href="/login?modo=registro">
+                  Crear mi cuenta
+                </Link>
+              </div>
+            </Reveal>
 
-            <div className={styles.benefitGrid}>
-              {USUARIO_BENEFICIOS.map((b) => (
-                <div key={b.title} className={styles.benefit}>
-                  <span className={styles.benefitIcon}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                      {b.icon}
-                    </svg>
-                  </span>
-                  <h3>{b.title}</h3>
-                  <p>{b.description}</p>
-                </div>
+            <div className={`${styles.benefitGrid} ${styles.splitVisual}`}>
+              {USUARIO_BENEFICIOS.map((b, i) => (
+                <Reveal key={b.title} delay={i * 80}>
+                  <div className={styles.benefit}>
+                    <span className={styles.benefitIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        {b.icon}
+                      </svg>
+                    </span>
+                    <h3>{b.title}</h3>
+                    <p>{b.description}</p>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -252,32 +266,38 @@ export default function Home() {
 
       <section id="faq" className={`${styles.section} ${styles.sectionLight}`} style={{ background: "var(--paper-soft)" }}>
         <div className={styles.bandInner} style={{ maxWidth: 760 }}>
-          <div className={styles.sectionHead} style={{ marginInline: "auto", textAlign: "center" }}>
-            <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
-              Preguntas frecuentes
-            </span>
-            <h2>Lo que quizá te estás preguntando</h2>
-          </div>
+          <Reveal>
+            <div className={styles.sectionHead} style={{ marginInline: "auto", textAlign: "center" }}>
+              <span className={styles.eyebrow} style={{ color: "var(--gold-deep)" }}>
+                Preguntas frecuentes
+              </span>
+              <h2>Lo que quizá te estás preguntando</h2>
+            </div>
+          </Reveal>
 
-          <FaqAccordion items={FAQ_ITEMS} />
+          <Reveal delay={100}>
+            <FaqAccordion items={FAQ_ITEMS} />
+          </Reveal>
         </div>
       </section>
 
       <section className={`${styles.section} ${styles.closing}`}>
         <div className={styles.bandInner}>
-          <span className={styles.eyebrow} style={{ color: "var(--text-dark-muted)" }}>
-            Únete hoy
-          </span>
-          <h2 style={{ marginTop: 14 }}>Es momento de que cada compra valga más</h2>
-          <p>Ya seas cliente o dueño de negocio, Loyalty APP está hecha para ti.</p>
-          <div className={styles.heroCtas}>
-            <Link className={`${styles.btn} ${styles.btnGold}`} href="/login?modo=registro">
-              Crear mi cuenta
-            </Link>
-            <Link className={`${styles.btn} ${styles.btnOutlineLight}`} href="/login">
-              Registrar mi negocio
-            </Link>
-          </div>
+          <Reveal>
+            <span className={styles.eyebrow} style={{ color: "var(--text-dark-muted)" }}>
+              Únete hoy
+            </span>
+            <h2 style={{ marginTop: 14 }}>Es momento de que cada compra valga más</h2>
+            <p>Ya seas cliente o dueño de negocio, Loyalty APP está hecha para ti.</p>
+            <div className={styles.heroCtas}>
+              <Link className={`${styles.btn} ${styles.btnGold}`} href="/login?modo=registro">
+                Crear mi cuenta
+              </Link>
+              <Link className={`${styles.btn} ${styles.btnOutlineLight}`} href="/login">
+                Registrar mi negocio
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 

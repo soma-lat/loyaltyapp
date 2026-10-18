@@ -14,6 +14,11 @@ export function LoyaltyCardDemo() {
   const sheenRef = useRef<HTMLDivElement>(null);
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    // Tilt is a hover effect; on touch it would fight page scroll and get
+    // stuck mid-rotation once the finger lifts, so only fine pointers
+    // (mouse/trackpad) drive it. Touch devices get a CSS idle animation
+    // instead (see .card / @keyframes cardIdle).
+    if (e.pointerType !== "mouse") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const wrap = wrapRef.current;
     const card = cardRef.current;
@@ -42,9 +47,6 @@ export function LoyaltyCardDemo() {
 
   return (
     <div className={styles.heroStage}>
-      <svg className={`${styles.floatDeco} ${styles.cup}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}>
-        <path d="M4 9h13a3 3 0 0 1 0 6h-1M4 9v7a3 3 0 0 0 3 3h5a3 3 0 0 0 3-3V9M4 9l1-4h9l1 4" />
-      </svg>
       <svg className={`${styles.floatDeco} ${styles.spark}`} viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2l2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2z" />
       </svg>
@@ -54,6 +56,8 @@ export function LoyaltyCardDemo() {
         ref={wrapRef}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
+        onPointerUp={handlePointerLeave}
+        onPointerCancel={handlePointerLeave}
       >
         <div className={styles.card} ref={cardRef}>
           <div className={styles.cardSheen} ref={sheenRef} />
