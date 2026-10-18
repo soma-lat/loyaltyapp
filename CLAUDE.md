@@ -228,7 +228,10 @@ src/
       admin.ts      (cliente con service_role, solo servidor)
       client.ts     (cliente del navegador)
       server.ts     (cliente del servidor)
+    fonts.ts        (Nunito/IBM Plex Mono via next/font/local, autohospedadas
+                     en src/fonts/ para que el build no dependa de red)
     types.ts
+  fonts/            (archivos .woff2 usados por lib/fonts.ts)
   middleware.ts
 public/
   manifest.webmanifest
