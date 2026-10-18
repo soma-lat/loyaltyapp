@@ -35,7 +35,7 @@ export default async function SuperAdminPage() {
         </section>
 
         <section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-          <div>
+          <div className="lg:order-1">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
               Negocios
             </h2>
@@ -78,7 +78,7 @@ export default async function SuperAdminPage() {
             </div>
           </div>
 
-          <div>
+          <div className="order-first lg:order-2">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
               Nuevo negocio
             </h2>
