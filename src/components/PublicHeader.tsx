@@ -80,10 +80,16 @@ export function PublicHeader() {
             </a>
           ))}
           <Link
+            href="/login"
+            onClick={() => setOpen(false)}
+            style={{ borderTop: "1px solid var(--line-dark)", paddingTop: 16, marginTop: 4 }}
+          >
+            Iniciar sesión
+          </Link>
+          <Link
             className={`${styles.btn} ${styles.btnGhostDark}`}
             href="/login"
             onClick={() => setOpen(false)}
-            style={{ marginTop: 8 }}
           >
             Registrar mi negocio
           </Link>
