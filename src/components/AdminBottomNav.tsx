@@ -14,7 +14,7 @@ export const ADMIN_TABS: {
   { href: "/admin/clientes", label: "Clientes", icon: UsersIcon },
   { href: "/admin/compras", label: "Compras", icon: ListIcon },
   { href: "/admin/informes", label: "Informes", icon: ChartIcon },
-  { href: "/admin/programa", label: "Programa", icon: SettingsIcon },
+  { href: "/admin/promociones", label: "Promociones", icon: SettingsIcon },
 ];
 
 export function isAdminTabActive(pathname: string, href: string) {

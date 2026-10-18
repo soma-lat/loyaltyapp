@@ -69,7 +69,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
             {programs?.map((p) => (
               <li key={p.id}>
                 {p.name}: {p.purchases_required} compras → {p.reward_description}{" "}
-                {p.active ? "" : "(inactivo)"}
+                {p.status !== "active" && `(${p.status})`}
               </li>
             ))}
             {!programs?.length && <li className="text-gray-400">Sin programa configurado.</li>}

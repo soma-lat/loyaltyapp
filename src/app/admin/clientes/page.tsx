@@ -23,32 +23,31 @@ export default async function ClientesPage() {
     );
   }
 
-  const [{ data: progressRows }, { data: activeProgram }, { data: availableCoupons }] = await Promise.all([
+  const [{ data: progressRows }, { data: promotions }, { data: availableCoupons }] = await Promise.all([
     supabase
       .from("customer_business_progress")
-      .select("customer_id, purchases_count, profiles:customer_id(full_name)")
+      .select("customer_id, purchases_count, loyalty_program_id, profiles:customer_id(full_name)")
       .eq("business_id", businessId),
     supabase
       .from("loyalty_programs")
       .select("*")
       .eq("business_id", businessId)
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .neq("status", "draft")
+      .order("created_at", { ascending: false }),
     supabase.from("coupons").select("*").eq("business_id", businessId).eq("status", "available"),
   ]);
 
-  const customers = ((progressRows ?? []) as any[]).map((r) => ({
+  const progress = ((progressRows ?? []) as any[]).map((r) => ({
     customerId: r.customer_id as string,
     fullName: (r.profiles?.full_name as string | null) || "Cliente",
     purchasesCount: r.purchases_count as number,
+    loyaltyProgramId: r.loyalty_program_id as string,
   }));
 
   return (
     <ClientesView
-      initialCustomers={customers}
-      program={(activeProgram as LoyaltyProgram | null) ?? null}
+      progress={progress}
+      promotions={(promotions ?? []) as LoyaltyProgram[]}
       initialCoupons={(availableCoupons ?? []) as Coupon[]}
     />
   );

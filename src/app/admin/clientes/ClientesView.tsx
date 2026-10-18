@@ -9,19 +9,20 @@ import { useToast } from "@/components/Toast";
 import { SearchIcon, GiftIcon } from "@/components/icons";
 import type { Coupon, LoyaltyProgram } from "@/lib/types";
 
-type CustomerRow = {
+type ProgressRow = {
   customerId: string;
   fullName: string;
   purchasesCount: number;
+  loyaltyProgramId: string;
 };
 
 export function ClientesView({
-  initialCustomers,
-  program,
+  progress,
+  promotions,
   initialCoupons,
 }: {
-  initialCustomers: CustomerRow[];
-  program: LoyaltyProgram | null;
+  progress: ProgressRow[];
+  promotions: LoyaltyProgram[];
   initialCoupons: Coupon[];
 }) {
   const supabase = createClient();
@@ -31,14 +32,23 @@ export function ClientesView({
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [redeeming, setRedeeming] = useState<string | null>(null);
+  const [promotionId, setPromotionId] = useState<string | null>(
+    promotions.find((p) => p.status === "active")?.id ?? promotions[0]?.id ?? null
+  );
+
+  const promotion = promotions.find((p) => p.id === promotionId) ?? null;
+  const customers = useMemo(
+    () => progress.filter((p) => p.loyaltyProgramId === promotionId),
+    [progress, promotionId]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return initialCustomers;
-    return initialCustomers.filter((c) => c.fullName.toLowerCase().includes(q));
-  }, [initialCustomers, query]);
+    if (!q) return customers;
+    return customers.filter((c) => c.fullName.toLowerCase().includes(q));
+  }, [customers, query]);
 
-  const selected = initialCustomers.find((c) => c.customerId === selectedId) ?? null;
+  const selected = customers.find((c) => c.customerId === selectedId) ?? null;
   const selectedCoupons = coupons.filter((c) => c.customer_id === selectedId);
 
   async function handleRedeem(couponId: string) {
@@ -55,8 +65,33 @@ export function ClientesView({
     showToast("Cupón canjeado");
   }
 
+  if (!promotions.length) {
+    return (
+      <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
+        Aún no tienes promociones activadas, así que no hay clientes con progreso todavía.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      {promotions.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {promotions.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPromotionId(p.id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${
+                p.id === promotionId ? "bg-primary text-white" : "bg-surface text-muted"
+              }`}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="relative">
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
         <input
@@ -69,7 +104,7 @@ export function ClientesView({
 
       {!filtered.length ? (
         <p className="rounded-3xl border border-dashed border-bordercolor bg-white p-5 text-sm text-muted">
-          {initialCustomers.length ? "Ningún cliente coincide con tu búsqueda." : "Aún no tienes clientes registrados."}
+          {customers.length ? "Ningún cliente coincide con tu búsqueda." : "Aún no tienes clientes con progreso en esta promoción."}
         </p>
       ) : (
         <ul className="grid gap-3">
@@ -114,10 +149,10 @@ export function ClientesView({
         {selected && (
           <div className="space-y-4">
             <ProgressCard
-              businessName="Progreso en tu negocio"
+              businessName={promotion?.name ?? "Progreso en tu negocio"}
               purchasesCount={selected.purchasesCount}
-              purchasesRequired={program?.purchases_required ?? null}
-              rewardDescription={program?.reward_description ?? null}
+              purchasesRequired={promotion?.purchases_required ?? null}
+              rewardDescription={promotion?.reward_description ?? null}
             />
 
             <div>

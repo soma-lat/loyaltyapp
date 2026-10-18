@@ -31,13 +31,20 @@ Paneles:
 - Panel de negocio (/admin): mismo lenguaje visual que el portal (tokens
   compartidos, Nunito, header y bottom nav propios: AdminHeader/
   AdminBottomNav). Secciones: Inicio (resumen del mes + actividad reciente),
-  Escanear (acceso directo desde el header), Clientes (lista buscable; cada
-  cliente abre un modal con su progreso y boton "Canjear" que llama a
-  redeem_coupon), Compras (historial con filtro Todas/Compras/Canjes y
-  paginado), Informes (resumen del mes, tendencia de 14 dias, ranking de
-  clientes frecuentes) y Programa (configuracion del programa de lealtad).
-  Clientes, Compras y Programa resuelven sus datos en el servidor (page.tsx)
-  y los pasan como props a una vista cliente.
+  Escanear (acceso directo desde el header; si hay mas de una promocion
+  activa, pide elegir a cual aplica la compra antes de mostrar la camara),
+  Clientes (lista buscable, con selector de promocion si hay mas de una; cada
+  cliente abre un modal con su progreso en esa promocion y boton "Canjear"
+  que llama a redeem_coupon), Compras (historial con filtro Todas/Compras/
+  Canjes y paginado), Informes (resumen del mes, tendencia de 14 dias,
+  ranking de clientes frecuentes), Promociones (/admin/promociones: crear,
+  editar y mover el ciclo de vida draft/active/paused/finished de cada
+  promocion de sellos; varias pueden estar "active" a la vez, ej. un
+  programa de cafes y otro de crepas en paralelo) y Perfil (/admin/perfil:
+  nombre, logotipo, descripcion, ubicacion y contacto del negocio; sin tab
+  propio en el bottom nav, se accede desde el nombre del negocio en
+  AdminHeader). Clientes, Compras, Promociones y Perfil resuelven sus datos
+  en el servidor (page.tsx) y los pasan como props a una vista cliente.
 - Super admin (/superadmin): alta de negocios, activar/suspender, asignar
   administradores (src/app/superadmin/negocios/[id]/), transacciones
   globales.
@@ -97,7 +104,12 @@ Tablas:
 businesses
   id uuid PK | name text | slug text unique | status (active, suspended,
   trial; default trial) | plan (free, pro, enterprise; default free) |
-  created_at
+  logo_url text | description text | address text | contact_phone text |
+  contact_email text | created_at
+  (logo_url/description/address/contact_phone/contact_email agregados en
+  migracion 0007; editables por business_admin desde /admin/perfil, status/
+  plan/slug reservados a super_admin via trigger
+  prevent_business_privilege_escalation)
 
 profiles (extiende auth.users, on delete cascade)
   id uuid PK -> auth.users | full_name text | role text (default customer) |
@@ -106,19 +118,27 @@ profiles (extiende auth.users, on delete cascade)
   (email se copia de auth.users al registrarse y se mantiene sincronizado si
   el usuario lo cambia; phone es opcional, capturado en /login)
 
-loyalty_programs
+loyalty_programs (promociones de sellos; varias pueden estar "active" a la
+  vez por negocio, ej. un programa de cafes y otro de crepas en paralelo)
   id | business_id -> businesses | name (default "Programa de lealtad") |
   purchases_required int > 0 (default 6) | reward_description (default
-  "Producto gratis") | active boolean (default true) | created_at
+  "Producto gratis") | status (draft, active, paused, finished; default
+  draft) | created_at
+  (status reemplazo a active boolean en la migracion 0008; sin restriccion
+  de unicidad, el negocio decide cuantas promociones mantiene "active")
 
-customer_business_progress (una fila por cliente y negocio)
+customer_business_progress (una fila por cliente, negocio y promocion)
   id | customer_id -> profiles | business_id -> businesses |
-  purchases_count int (default 0) | updated_at | unique (customer_id,
-  business_id)
+  loyalty_program_id -> loyalty_programs | purchases_count int (default 0) |
+  updated_at | unique (customer_id, business_id, loyalty_program_id)
+  (loyalty_program_id agregado en la migracion 0008: antes el contador era
+  por cliente+negocio, lo que mezclaba el progreso si habia mas de una
+  promocion activa; register_purchase ahora exige indicar la promocion)
 
 transactions
   id | business_id | customer_id | registered_by -> profiles |
-  type (purchase, redemption) | amount numeric(12,2) | note | created_at
+  loyalty_program_id -> loyalty_programs (nullable) | type (purchase,
+  redemption) | amount numeric(12,2) | note | created_at
 
 coupons
   id | customer_id | business_id | loyalty_program_id | reward_description |
@@ -130,10 +150,12 @@ Funciones auxiliares (SECURITY DEFINER, usadas por RLS):
 - current_business_id()  : negocio del usuario autenticado.
 
 Funciones de negocio (SECURITY DEFINER):
-- register_purchase(p_customer_id, p_amount, p_note)
-    Solo business_admin. Valida cliente y programa activo, inserta la
-    transaccion, suma al progreso y, al llegar al umbral, emite un cupon y
-    reinicia el contador a 0.
+- register_purchase(p_customer_id, p_program_id, p_amount, p_note)
+    Solo business_admin. p_program_id es obligatorio (el admin lo elige en
+    /admin/scan antes de escanear si hay mas de una promocion activa).
+    Valida cliente y que la promocion sea del negocio y este "active",
+    inserta la transaccion, suma al progreso de esa promocion y, al llegar
+    al umbral, emite un cupon y reinicia el contador a 0.
 - redeem_coupon(p_coupon_id)
     Solo business_admin del mismo negocio. Marca el cupon como redeemed y
     registra una transaccion de tipo redemption.
@@ -169,11 +191,12 @@ Politicas RLS (resumen):
 2. Super admin asigna un administrador por correo (la cuenta debe existir; la
    ruta usa la service_role key). El perfil queda como business_admin con
    business_id.
-3. El administrador entra a /admin/programa y configura compras necesarias y
-   recompensa.
+3. El administrador entra a /admin/promociones, crea una promocion (compras
+   necesarias y recompensa) y la activa.
 4. El cliente se registra en /login (sin correo de confirmacion) y ve su QR
    en /portal.
-5. El negocio abre /admin/scan y escanea el QR en cada compra.
+5. El negocio abre /admin/scan, elige la promocion si tiene mas de una
+   activa, y escanea el QR en cada compra.
 6. Al llegar al umbral se emite un cupon automaticamente.
 7. El cliente ve su cupon en /portal. El negocio lo canjea desde el modal de
    cliente en /admin (boton "Canjear", llama a redeem_coupon).
@@ -192,8 +215,9 @@ src/
       clientes/ (page.tsx, ClientesView.tsx)
       compras/ (page.tsx, ComprasView.tsx)
       informes/page.tsx
-      programa/ (page.tsx, ProgramaView.tsx)
-      scan/page.tsx
+      perfil/ (page.tsx, PerfilView.tsx)
+      promociones/ (page.tsx, PromocionesView.tsx)
+      scan/ (page.tsx, ScanView.tsx)
       layout.tsx
       page.tsx
     api/superadmin/assign-admin/route.ts

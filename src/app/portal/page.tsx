@@ -23,16 +23,12 @@ export default async function PortalPage() {
     supabase.from("profiles").select("full_name").eq("id", user.id).single(),
   ]);
 
-  const businessIds = (progressRows ?? []).map((p: any) => p.business_id);
-  const { data: programs } = businessIds.length
-    ? await supabase
-        .from("loyalty_programs")
-        .select("*")
-        .in("business_id", businessIds)
-        .eq("active", true)
+  const programIds = (progressRows ?? []).map((p: any) => p.loyalty_program_id);
+  const { data: programs } = programIds.length
+    ? await supabase.from("loyalty_programs").select("*").in("id", programIds)
     : { data: [] as LoyaltyProgram[] };
 
-  const programByBusiness = new Map((programs ?? []).map((p: LoyaltyProgram) => [p.business_id, p]));
+  const programById = new Map((programs ?? []).map((p: LoyaltyProgram) => [p.id, p]));
   const memberName = profile?.full_name || user.email || "Socio";
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
@@ -80,11 +76,12 @@ export default async function PortalPage() {
         ) : (
           <div className="grid gap-3">
             {(progressRows as (CustomerBusinessProgress & { businesses: Business })[]).map((p) => {
-              const program = programByBusiness.get(p.business_id);
+              const program = programById.get(p.loyalty_program_id);
+              const label = program ? `${p.businesses?.name ?? ""} · ${program.name}` : p.businesses?.name ?? "";
               return (
                 <ProgressCard
                   key={p.id}
-                  businessName={p.businesses?.name ?? ""}
+                  businessName={label}
                   purchasesCount={p.purchases_count}
                   purchasesRequired={program?.purchases_required ?? null}
                   rewardDescription={program?.reward_description ?? null}

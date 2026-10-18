@@ -20,8 +20,11 @@ export function AdminHeader({ businessName, displayName }: { businessName: strin
   const pathname = usePathname();
   const supabase = createClient();
   const isScanning = pathname.startsWith("/admin/scan");
+  const isPerfil = pathname.startsWith("/admin/perfil");
   const title = isScanning
     ? "Escanear"
+    : isPerfil
+    ? "Perfil del negocio"
     : ADMIN_TABS.find((t) => isAdminTabActive(pathname, t.href))?.label ?? "Inicio";
 
   async function handleLogout() {
@@ -33,9 +36,12 @@ export function AdminHeader({ businessName, displayName }: { businessName: strin
     <header className="sticky top-0 z-40 border-b border-bordercolor bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
-          <p className="truncate text-[10px] font-bold uppercase tracking-widest text-accent">
+          <Link
+            href="/admin/perfil"
+            className="block truncate text-[10px] font-bold uppercase tracking-widest text-accent hover:underline"
+          >
             {businessName}
-          </p>
+          </Link>
           <h1 className="truncate text-xl font-extrabold text-primary">{title}</h1>
         </div>
 

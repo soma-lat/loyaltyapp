@@ -2,6 +2,7 @@ export type Role = "customer" | "business_admin" | "super_admin";
 export type BusinessStatus = "active" | "suspended" | "trial";
 export type TransactionType = "purchase" | "redemption";
 export type CouponStatus = "available" | "redeemed" | "expired";
+export type PromotionStatus = "draft" | "active" | "paused" | "finished";
 
 export interface Business {
   id: string;
@@ -9,6 +10,11 @@ export interface Business {
   slug: string;
   status: BusinessStatus;
   plan: "free" | "pro" | "enterprise";
+  logo_url: string | null;
+  description: string | null;
+  address: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
   created_at: string;
 }
 
@@ -28,7 +34,7 @@ export interface LoyaltyProgram {
   name: string;
   purchases_required: number;
   reward_description: string;
-  active: boolean;
+  status: PromotionStatus;
   created_at: string;
 }
 
@@ -36,6 +42,7 @@ export interface CustomerBusinessProgress {
   id: string;
   customer_id: string;
   business_id: string;
+  loyalty_program_id: string;
   purchases_count: number;
   updated_at: string;
 }
@@ -45,6 +52,7 @@ export interface Transaction {
   business_id: string;
   customer_id: string;
   registered_by: string | null;
+  loyalty_program_id: string | null;
   type: TransactionType;
   amount: number | null;
   note: string | null;
@@ -108,7 +116,12 @@ export interface Database {
     Views: {};
     Functions: {
       register_purchase: {
-        Args: { p_customer_id: string; p_amount?: number | null; p_note?: string | null };
+        Args: {
+          p_customer_id: string;
+          p_program_id: string;
+          p_amount?: number | null;
+          p_note?: string | null;
+        };
         Returns: {
           transaction_id: string;
           purchases_count: number;
@@ -121,7 +134,7 @@ export interface Database {
         Args: { p_coupon_id: string };
         Returns: Coupon;
       };
-      current_role: {
+      current_profile_role: {
         Args: Record<string, never>;
         Returns: string;
       };

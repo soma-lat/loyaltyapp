@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { ProgramaView } from "./ProgramaView";
+import { PromocionesView } from "./PromocionesView";
 import type { LoyaltyProgram } from "@/lib/types";
 
-export default async function ProgramaPage() {
+export default async function PromocionesPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -23,14 +23,11 @@ export default async function ProgramaPage() {
     );
   }
 
-  const { data: existing } = await supabase
+  const { data: promotions } = await supabase
     .from("loyalty_programs")
     .select("*")
     .eq("business_id", businessId)
-    .eq("active", true)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  return <ProgramaView businessId={businessId} initialProgram={(existing as LoyaltyProgram | null) ?? null} />;
+  return <PromocionesView businessId={businessId} initialPromotions={(promotions ?? []) as LoyaltyProgram[]} />;
 }
